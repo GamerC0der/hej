@@ -8,6 +8,7 @@ class App:
     def __init__(self):
         self.routes = {}
         self.server = None
+        self.not_found_handler = None
 
     def route(self, path: str, methods=None):
         if methods is None:
@@ -21,6 +22,10 @@ class App:
 
     def get(self, path: str):
         return self.route(path, ['GET'])
+
+    def not_found(self, func: Callable):
+        self.not_found_handler = func
+        return func
 
     def run(self, host='127.0.0.1', port=5000, debug=False):
         class Handler(http.server.BaseHTTPRequestHandler):
@@ -43,8 +48,16 @@ class App:
                         self.wfile.write(b'Internal Server Error')
                 else:
                     self.send_response(404)
+                    self.send_header('Content-type', 'text/html')
                     self.end_headers()
-                    self.wfile.write(b'Not Found')
+                    if self.app.not_found_handler:
+                        try:
+                            result = self.app.not_found_handler()
+                            self.wfile.write(str(result).encode())
+                        except:
+                            self.wfile.write(b'Not Found')
+                    else:
+                        self.wfile.write(b'Not Found')
             def log_message(self, format, *args):
                 if debug:
                     super().log_message(format, *args)
