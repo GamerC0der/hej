@@ -2,7 +2,7 @@ import hej
 
 @get('/')
 def home():
-    return 'Hello, World!'
+    return 'home.html'
 
 @not_found
 def custom_404():

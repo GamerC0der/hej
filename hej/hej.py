@@ -2,6 +2,7 @@ import http.server
 import socketserver
 import threading
 import urllib.parse
+import os
 from typing import Callable, Dict
 
 class App:
@@ -27,6 +28,14 @@ class App:
         self.not_found_handler = func
         return func
 
+    def render_template(self, template_name: str, context: dict = None):
+        context = context or {}
+        with open(os.path.join(os.path.dirname(__file__), '..', 'templates', template_name)) as f:
+            template = f.read()
+        for k, v in context.items():
+            template = template.replace('{{ ' + k + ' }}', str(v))
+        return template
+
     def run(self, host='127.0.0.1', port=5000, debug=False):
         class Handler(http.server.BaseHTTPRequestHandler):
             def __init__(self, *args, app=None, **kwargs):
@@ -38,6 +47,10 @@ class App:
                 if (method, path) in self.app.routes:
                     try:
                         result = self.app.routes[(method, path)]()
+                        if isinstance(result, tuple) and len(result) == 2:
+                            result = self.app.render_template(*result)
+                        elif isinstance(result, str) and result.endswith('.html'):
+                            result = self.app.render_template(result)
                         self.send_response(200)
                         self.send_header('Content-type', 'text/html')
                         self.end_headers()
