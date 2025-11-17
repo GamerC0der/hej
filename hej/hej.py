@@ -3,6 +3,7 @@ import socketserver
 import threading
 import urllib.parse
 import os
+import time
 from typing import Callable, Dict
 
 class App:
@@ -96,7 +97,17 @@ class App:
         server_thread.start()
 
         try:
-            server_thread.join()
+            test_file = __import__('sys').argv[0]
+            templates_dir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+            mtime_test = os.stat(test_file).st_mtime
+            mtime_templates = max((os.stat(os.path.join(templates_dir, f)).st_mtime for f in os.listdir(templates_dir) if f.endswith('.html')), default=0)
+            while True:
+                time.sleep(1)
+                if os.stat(test_file).st_mtime != mtime_test or max((os.stat(os.path.join(templates_dir, f)).st_mtime for f in os.listdir(templates_dir) if f.endswith('.html')), default=0) != mtime_templates:
+                    print('Files changed, restarting...')
+                    self.server.shutdown()
+                    server_thread.join()
+                    return self.run(host, port, debug)
         except KeyboardInterrupt:
             if self.server:
                 self.server.shutdown()
