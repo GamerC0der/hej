@@ -7,7 +7,7 @@ __author__ = "Matthew"
 
 import sys
 import builtins
-from .hej import App
+from .hej import App, html, blocks
 
 app = App()
 
@@ -22,9 +22,11 @@ def run(host='127.0.0.1', port=5000, debug=False):
 
 builtins.get = get
 builtins.not_found = not_found
+builtins.html = html
+builtins.blocks = blocks
 
 current_module = sys.modules[__name__]
 current_module.run = run
 
-__all__ = ['get', 'not_found', 'run', 'app', 'App']
+__all__ = ['get', 'not_found', 'run', 'app', 'App', 'html', 'blocks']
 
