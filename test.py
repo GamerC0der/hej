@@ -4,10 +4,20 @@ import hej
 def home():
     return html.html(
         html.head(
-            html.title('Hej')
+            html.title('Hej'),
+            html.script('''
+                document.addEventListener('DOMContentLoaded', function() {
+                    const btn = document.querySelector('.btn');
+
+                    btn.addEventListener('click', function() {
+                        alert('Button clicked!');
+                    });
+                });
+            ''')
         ),
         html.body(
-            html.h1('Hej, World')
+            html.h1('Hej, World'),
+            html.button('Click Me!', class_='btn')
         )
     ) 
 
