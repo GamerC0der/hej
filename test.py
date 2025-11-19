@@ -138,6 +138,7 @@ def generate_docs():
                 class_='sidebar'
             ),
             html.div(
+                html.button('Back', onclick="window.location.href='/'", style="margin-bottom: 20px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;"),
                 html.h1('Hej Framework Documentation'),
                 html.p('Automatically generated documentation from hej.py'),
                 *content_sections,
