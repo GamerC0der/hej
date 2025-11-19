@@ -163,4 +163,16 @@ def custom_404():
     )
 
 if __name__ == '__main__':
-    hej.run(debug=True)
+    debug_config = {
+        'enabled': True,
+        'log_level': 'DEBUG',
+        'log_requests': True,
+        'log_responses': True,
+        'log_timing': True,
+        'show_stack_traces': True,
+        'log_static_files': False,
+        'log_templates': True,
+        'colorize_logs': True
+    }
+
+    hej.run(debug=debug_config)
