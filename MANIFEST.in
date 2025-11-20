@@ -1,0 +1,7 @@
+include hej/*.py
+exclude templates/*
+exclude static/*
+exclude test.py
+exclude __pycache__/*
+exclude */__pycache__/*
+exclude *.pyc
