@@ -4,6 +4,7 @@ import threading
 import urllib.parse
 import os
 import time
+import json
 from typing import Callable, Dict, Any
 
 class HTMLElement:
@@ -120,6 +121,7 @@ class App:
         self.routes = {}
         self.server = None
         self.not_found_handler = None
+        self.swagger_enabled = True
 
     def route(self, path: str, methods=None):
         if methods is None:
@@ -146,7 +148,87 @@ class App:
             template = template.replace('{{ ' + k + ' }}', str(v))
         return template
 
+    def generate_openapi_spec(self):
+        """Generate OpenAPI 3.0 specification for all routes"""
+        paths = {}
+        for (method, path), handler in self.routes.items():
+            if path not in paths:
+                paths[path] = {}
+            paths[path][method.lower()] = {
+                'responses': {
+                    '200': {
+                        'description': 'Successful response'
+                    }
+                }
+            }
+
+        return {
+            'openapi': '3.0.0',
+            'info': {
+                'title': 'Hej API',
+                'version': '1.0.0',
+                'description': 'Automatically generated API documentation'
+            },
+            'paths': paths
+        }
+
+    def serve_swagger_ui(self):
+        """Serve Swagger UI HTML page"""
+        spec = self.generate_openapi_spec()
+        spec_json = json.dumps(spec)
+
+        return f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Swagger UI - Hej API</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui.css" />
+    <style>
+        html {{
+            box-sizing: border-box;
+            overflow: -moz-scrollbars-vertical;
+            overflow-y: scroll;
+        }}
+        *, *:before, *:after {{
+            box-sizing: inherit;
+        }}
+        body {{
+            margin:0;
+            background: #fafafa;
+        }}
+    </style>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {{
+            const spec = {spec_json};
+            const ui = SwaggerUIBundle({{
+                spec: spec,
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout"
+            }});
+        }};
+    </script>
+</body>
+</html>
+"""
+
     def run(self, host='127.0.0.1', port=5000, debug=False):
+        # Automatically add Swagger UI route
+        if self.swagger_enabled and ('GET', '/swagger') not in self.routes:
+            self.routes[('GET', '/swagger')] = self.serve_swagger_ui
+
         class Handler(http.server.BaseHTTPRequestHandler):
             def __init__(self, *args, app=None, **kwargs):
                 self.app = app
