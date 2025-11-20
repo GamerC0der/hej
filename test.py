@@ -11,9 +11,12 @@ def home():
                     margin: 0;
                     padding: 40px;
                     text-align: center;
+                    background-color: #1a1a1a;
+                    color: #ffffff;
                 }
                 h1 {
                     margin-bottom: 40px;
+                    color: #ffffff;
                 }
                 .buttons {
                     display: flex;
@@ -24,6 +27,13 @@ def home():
                     padding: 10px 20px;
                     font-size: 16px;
                     cursor: pointer;
+                    background-color: #333333;
+                    color: #ffffff;
+                    border: 1px solid #555555;
+                    border-radius: 4px;
+                }
+                button:hover {
+                    background-color: #444444;
                 }
             """)
         ),
