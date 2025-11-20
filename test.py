@@ -50,6 +50,10 @@ def custom_404():
         )
     )
 
+@get('/docs')
+def docs():
+    return 'docs.html'
+
 if __name__ == '__main__':
     debug_config = {
         'enabled': True,

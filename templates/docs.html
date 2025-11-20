@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Documentation - Hej Framework</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            color: #e6e6e6;
+            background-color: #1a1a1a;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #ffffff;
+            border-bottom: 2px solid #5dade2;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #cccccc;
+            margin-top: 30px;
+        }
+        .code {
+            background: #2d2d2d;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .nav {
+            background: #2d2d2d;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .nav a {
+            color: #5dade2;
+            text-decoration: none;
+            margin-right: 15px;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="/">Home</a>
+            <a href="/swagger">API Docs</a>
+        </div>
+
+        <h1>Quick Start - Hej Framework</h1>
+
+        <p>Create a file called <code>app.py</code> and add this code:</p>
+
+        <pre class="code">import hej
+
+@get('/')
+def home():
+    return html.html(
+        html.head(
+            html.title('My App')
+        ),
+        html.body(
+            html.h1('Hello, World!'),
+            html.p('Welcome to Hej Framework')
+        )
+    )
+
+if __name__ == '__main__':
+    hej.run()</pre>
+
+        <p>Run it with:</p>
+        <pre class="code">python app.py</pre>
+
+        <p>Visit <code>http://127.0.0.1:5000</code> to see your app!</p>
+
+        <h2>Add More Routes</h2>
+        <pre class="code">@get('/about')
+def about():
+    return html.html(
+        html.head(
+            html.title('About')
+        ),
+        html.body(
+            html.h1('About Page')
+        )
+    )</pre>
+    </div>
+</body>
+</html>
