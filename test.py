@@ -40,7 +40,7 @@ def home():
         html.body(
             html.h1('Hej, World!'),
             html.div(
-                html.button('Download Hej'),
+                html.button('Download Hej', onclick="window.location.href='https://pypi.org/project/hej/'"),
                 html.button('View API Docs', onclick="window.location.href='/docs'"),
                 class_='buttons'
             )
