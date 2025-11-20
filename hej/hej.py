@@ -5,6 +5,7 @@ import urllib.parse
 import os
 import time
 import json
+import sys
 from typing import Callable, Dict, Any
 
 class HTMLElement:
@@ -149,7 +150,6 @@ class App:
         return template
 
     def generate_openapi_spec(self):
-        """Generate OpenAPI 3.0 specification for all routes"""
         paths = {}
         for (method, path), handler in self.routes.items():
             if path not in paths:
@@ -173,7 +173,6 @@ class App:
         }
 
     def serve_swagger_ui(self):
-        """Serve Swagger UI HTML page"""
         spec = self.generate_openapi_spec()
         spec_json = json.dumps(spec)
 
@@ -225,7 +224,6 @@ class App:
 """
 
     def run(self, host='127.0.0.1', port=5000, debug=False):
-        # Automatically add Swagger UI route
         if self.swagger_enabled and ('GET', '/swagger') not in self.routes:
             self.routes[('GET', '/swagger')] = self.serve_swagger_ui
 
@@ -309,3 +307,20 @@ class App:
             if self.server:
                 self.server.shutdown()
             print('Server stopped')
+
+
+def main():
+    if len(sys.argv) != 2:
+        print("Usage: hej <filename>")
+        sys.exit(1)
+
+    filename = sys.argv[1]
+    if not os.path.isfile(filename):
+        print(f"Error: File '{filename}' not found")
+        sys.exit(1)
+
+    exec(open(filename).read())
+
+
+if __name__ == '__main__':
+    main()

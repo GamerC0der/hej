@@ -32,5 +32,8 @@ Homepage = "https://pypi.org/project/hej/"
 where = ["."]
 include = ["hej*"]
 
+[project.scripts]
+hej = "hej.hej:main"
+
 [tool.setuptools.package-data]
 hej = ["*.py"]
