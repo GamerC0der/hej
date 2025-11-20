@@ -6,6 +6,9 @@ import os
 import time
 import json
 import sys
+import glob
+import ast
+import runpy
 from typing import Callable, Dict, Any
 
 class HTMLElement:
@@ -309,17 +312,92 @@ class App:
             print('Server stopped')
 
 
+def find_hej_app_files():
+    """Find Python files that import hej and have run() calls"""
+    candidates = [
+        'app.py', 'main.py', 'server.py', 'application.py',
+        'test.py', 'run.py', 'index.py', 'start.py'
+    ]
+
+    for candidate in candidates:
+        if os.path.isfile(candidate):
+            if has_hej_import_and_run(candidate):
+                return candidate
+
+    for py_file in glob.glob('*.py'):
+        if py_file not in ['__init__.py'] and has_hej_import_and_run(py_file):
+            return py_file
+
+    return None
+
+def has_hej_import_and_run(filename):
+    """Check if file imports hej and has a run() call"""
+    try:
+        with open(filename, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        tree = ast.parse(content)
+
+        has_hej_import = False
+        has_run_call = False
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name == 'hej':
+                        has_hej_import = True
+            elif isinstance(node, ast.ImportFrom):
+                if node.module == 'hej':
+                    has_hej_import = True
+
+            if isinstance(node, ast.Call):
+                if isinstance(node.func, ast.Attribute):
+                    if isinstance(node.func.value, ast.Name):
+                        if node.func.attr == 'run':
+                            has_run_call = True
+                elif isinstance(node.func, ast.Name) and node.func.id == 'run':
+                    has_run_call = True
+
+        return has_hej_import and has_run_call
+    except:
+        return False
+
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: hej <filename>")
+    if len(sys.argv) < 2:
+        print("Usage: hej <command> [options]")
+        print("Commands:")
+        print("  <filename>    Run a specific Python file")
+        print("  dev           Auto-detect and run Hej application")
+        print("  --version     Show version information")
         sys.exit(1)
 
-    filename = sys.argv[1]
-    if not os.path.isfile(filename):
-        print(f"Error: File '{filename}' not found")
-        sys.exit(1)
+    command = sys.argv[1]
 
-    exec(open(filename).read())
+    if command == '--version' or command == '-v':
+        try:
+            import hej
+            print(f"hej {hej.__version__}")
+        except:
+            print("hej 0.1.0")
+        sys.exit(0)
+
+    elif command == 'dev':
+        app_file = find_hej_app_files()
+        if not app_file:
+            print("Error: Could not find a Hej application file.")
+            print("Make sure you have a Python file that imports 'hej' and calls run()")
+            sys.exit(1)
+
+        print(f"Found Hej application: {app_file}")
+        filename = app_file
+
+    else:
+        filename = command
+        if not os.path.isfile(filename):
+            print(f"Error: File '{filename}' not found")
+            sys.exit(1)
+
+    runpy.run_path(filename, run_name='__main__')
 
 
 if __name__ == '__main__':

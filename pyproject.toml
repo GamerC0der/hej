@@ -4,8 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hej"
-version = "0.1.0"
-description = "A Python framework for websites"
+version = "0.2.0"
+description = "Simple Python web framework similar to Flask and FastHTML"
+readme = "README.md"
 authors = [
     {name = "Matthew"},
 ]
