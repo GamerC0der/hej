@@ -31,13 +31,12 @@ def home():
             html.h1('Hej, World!'),
             html.div(
                 html.button('Download Hej'),
-                html.button('View API Docs', onclick="window.location.href='/swagger'"),
+                html.button('View API Docs', onclick="window.location.href='/docs'"),
                 class_='buttons'
             )
         )
     ) 
-
-
+    
 @not_found
 def custom_404():
     return html.html(
