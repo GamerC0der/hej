@@ -117,7 +117,7 @@ class App:
 </html>
 """
 
-    def run(self, host='127.0.0.1', port=5000, debug=False):
+    def run(self, host='0.0.0.0', port=5000, debug=False):
         if self.swagger_enabled and ('GET', '/swagger') not in self.routes:
             self.routes[('GET', '/swagger')] = self.serve_swagger_ui
 
@@ -139,11 +139,13 @@ class App:
                         self.send_response(200)
                         self.send_header('Content-type', 'text/html')
                         self.end_headers()
-                        self.wfile.write(result_str.encode())
+                        if method != 'HEAD':
+                            self.wfile.write(result_str.encode())
                     except:
                         self.send_response(500)
                         self.end_headers()
-                        self.wfile.write(b'Internal Server Error')
+                        if method != 'HEAD':
+                            self.wfile.write(b'Internal Server Error')
                 else:
                     self.send_response(404)
                     self.send_header('Content-type', 'text/html')
@@ -151,11 +153,14 @@ class App:
                     if self.app.not_found_handler:
                         try:
                             result = self.app.not_found_handler()
-                            self.wfile.write(str(result).encode())
+                            if method != 'HEAD':
+                                self.wfile.write(str(result).encode())
                         except:
-                            self.wfile.write(b'Not Found')
+                            if method != 'HEAD':
+                                self.wfile.write(b'Not Found')
                     else:
-                        self.wfile.write(b'Not Found')
+                        if method != 'HEAD':
+                            self.wfile.write(b'Not Found')
             def log_message(self, format, *args):
                 if debug:
                     super().log_message(format, *args)
@@ -163,6 +168,7 @@ class App:
             do_POST = lambda self: self.handle_request('POST')
             do_PUT = lambda self: self.handle_request('PUT')
             do_DELETE = lambda self: self.handle_request('DELETE')
+            do_HEAD = lambda self: self.handle_request('HEAD')
 
         def run_server():
             socketserver.TCPServer.allow_reuse_address = True
