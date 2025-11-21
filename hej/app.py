@@ -264,12 +264,83 @@ def has_hej_import_and_run(filename):
     except:
         return False
 
+def convert_flask_to_hej(content):
+    import re
+
+    lines = content.split('\n')
+    converted_lines = []
+    app_name = None
+    has_run_call = False
+
+    for line in lines:
+        original_line = line
+
+        if 'from flask import' in line or 'import flask' in line:
+            line = 'import hej'
+
+        elif 'app = Flask(' in line:
+            match = re.search(r'app\s*=\s*Flask\([^)]*\)', line)
+            if match:
+                app_name = 'app'
+                continue
+
+        elif re.search(r'\w+\s*=\s*Flask\([^)]*\)', line):
+            match = re.search(r'(\w+)\s*=\s*Flask\([^)]*\)', line)
+            if match:
+                app_name = match.group(1)
+                continue
+
+        elif '@app.route(' in line:
+            match = re.search(r'@app\.route\(([^)]+)\)', line)
+            if match:
+                route_args = match.group(1)
+                methods_match = re.search(r'methods\s*=\s*\[([^\]]+)\]', route_args)
+                if methods_match:
+                    methods = methods_match.group(1).replace("'", "").replace('"', "").split(',')
+                    method = methods[0].strip().upper()
+                    route_path = re.sub(r',\s*methods\s*=\s*\[.*\]', '', route_args)
+                else:
+                    method = 'GET'
+                    route_path = route_args
+
+                if method == 'GET':
+                    line = f'@get({route_path})'
+                else:
+                    line = f'@app.route({route_path}, methods=["{method}"])'
+
+        elif re.search(r'if\s+__name__\s*==\s*[\'"]__main__[\'"]\s*:', line):
+            converted_lines.append(line)
+            converted_lines.append('    hej.run()')
+            has_run_call = True
+            continue
+
+        elif 'app.run(' in line:
+            if not has_run_call:
+                line = '    hej.run()'
+                has_run_call = True
+            else:
+                continue
+
+        converted_lines.append(line)
+
+    result = '\n'.join(converted_lines)
+
+    if app_name and app_name != 'app':
+        result = result.replace(f'@{app_name}.route(', '@get(')
+        result = result.replace(f'{app_name}.run(', 'hej.run(')
+
+    if not has_run_call:
+        result += '\n\nif __name__ == \'__main__\':\n    hej.run()'
+
+    return result
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: hej <command> [options]")
         print("Commands:")
         print("  <filename>    Run a specific Python file")
         print("  dev           Auto-detect and run Hej application")
+        print("  convert       Convert Flask app to Hej format")
         print("  --version     Show version information")
         sys.exit(1)
 
@@ -281,6 +352,34 @@ def main():
             print(f"hej {hej.__version__}")
         except:
             print("hej 0.1.0")
+        sys.exit(0)
+
+    elif command == 'convert':
+        if len(sys.argv) < 3:
+            print("Usage: hej convert <flask_file> [output_file]")
+            sys.exit(1)
+
+        flask_file = sys.argv[2]
+        output_file = sys.argv[3] if len(sys.argv) > 3 else flask_file.replace('.py', '_hej.py')
+
+        if not os.path.isfile(flask_file):
+            print(f"Error: File '{flask_file}' not found")
+            sys.exit(1)
+
+        try:
+            with open(flask_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            converted_content = convert_flask_to_hej(content)
+
+            with open(output_file, 'w', encoding='utf-8') as f:
+                f.write(converted_content)
+
+            print(f"Converted Flask app saved to: {output_file}")
+
+        except Exception as e:
+            print(f"Error converting file: {e}")
+            sys.exit(1)
         sys.exit(0)
 
     elif command == 'dev':

@@ -34,7 +34,7 @@ where = ["."]
 include = ["hej*"]
 
 [project.scripts]
-hej = "hej.hej:main"
+hej = "hej.app:main"
 
 [tool.setuptools.package-data]
 hej = ["*.py"]
