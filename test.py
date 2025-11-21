@@ -76,4 +76,4 @@ if __name__ == '__main__':
         'colorize_logs': True
     }
 
-    hej.run(debug=debug_config)
+    hej.run(host='0.0.0.0', port=5000, debug=debug_config)
