@@ -3,7 +3,8 @@ __author__ = "Matthew"
 
 import sys
 import builtins
-from .hej import App, html, blocks
+from .app import App
+from .html import html, blocks
 
 app = App()
 
