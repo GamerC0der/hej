@@ -95,6 +95,7 @@ class ScriptBuilder:
 class CSSBuilder:
     def __init__(self, selector=None, rules=None):
         self.blocks = []
+        self._mixins = {}
         if selector and rules:
             self.blocks.append(f"{selector} {{\n{self._format_rules(rules)}\n}}")
 
@@ -126,6 +127,68 @@ class CSSBuilder:
                 return CSSBuilder(f'{base_selector}:{pseudo}', rules)
             return CSSBuilder(selector, rules)
         return selector_method
+
+    def nest(self, selector, *blocks):
+        nested = CSSBuilder()
+        nested.blocks.append(f"{selector} {{")
+        for block in blocks:
+            if isinstance(block, CSSBuilder):
+                for b in block.blocks:
+                    nested.blocks.append("    " + b.replace('\n', '\n    '))
+            elif isinstance(block, dict):
+                nested.blocks.append("    " + self._format_rules(block))
+            else:
+                nested.blocks.append("    " + str(block))
+        nested.blocks.append("}")
+        return nested
+
+    def mixin(self, name, rules=None, **kwargs):
+        if rules is None:
+            rules = kwargs
+        self._mixins[name] = rules
+        return self
+
+    def use_mixin(self, name):
+        if name in self._mixins:
+            return CSSBuilder(rules=self._mixins[name])
+        return CSSBuilder()
+
+    def media(self, query, *blocks):
+        media_block = CSSBuilder()
+        media_block.blocks.append(f"@media {query} {{")
+        for block in blocks:
+            if isinstance(block, CSSBuilder):
+                for b in block.blocks:
+                    media_block.blocks.append("    " + b.replace('\n', '\n    '))
+            elif isinstance(block, dict):
+                media_block.blocks.append("    " + self._format_rules(block))
+            else:
+                media_block.blocks.append("    " + str(block))
+        media_block.blocks.append("}")
+        return media_block
+
+    def keyframes(self, name, *frames):
+        kf = CSSBuilder()
+        kf.blocks.append(f"@keyframes {name} {{")
+        for frame in frames:
+            if isinstance(frame, dict) and len(frame) == 1:
+                key, rules = next(iter(frame.items()))
+                kf.blocks.append(f"    {key} {{")
+                kf.blocks.append("        " + self._format_rules(rules))
+                kf.blocks.append("    }")
+        kf.blocks.append("}")
+        return kf
+
+    def variable(self, name, value):
+        return CSSBuilder(rules={f'--{name}': value})
+
+    def __add__(self, other):
+        if isinstance(other, CSSBuilder):
+            combined = CSSBuilder()
+            combined.blocks.extend(self.blocks)
+            combined.blocks.extend(other.blocks)
+            return combined
+        return self
 
     def __str__(self):
         return '\n'.join(self.blocks)
