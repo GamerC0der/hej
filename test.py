@@ -148,6 +148,12 @@ def docs():
                 .code-block {
                     display: none;
                 }
+                .tab-content {
+                    display: none;
+                }
+                .tab-content.active {
+                    display: block;
+                }
             """)
         ),
         html.body(
@@ -155,14 +161,16 @@ def docs():
                 html.h2('Navigation'),
                 html.nav(
                     html.a('Home', href='/'),
-                    html.a('Quickstart', href='/docs', class_='active')
+                    html.a('Quickstart', href='#', class_='active', **{'data-tab': 'quickstart'}),
+                    html.a('Templates', href='#', **{'data-tab': 'templates'})
                 ),
                 class_='sidebar'
             ),
             html.div(
-                html.h1('Quick Start - Hej Framework'),
-                html.p('Create a file called app.py and add this code:'),
-                html.textarea('''import hej
+                html.div(
+                    html.h1('Quick Start - Hej Framework'),
+                    html.p('Create a file called app.py and add this code:'),
+                    html.textarea('''import hej
 
 @get('/')
 def home():
@@ -178,9 +186,9 @@ def home():
 
 if __name__ == '__main__':
     hej.run()''', class_='code-block'),
-                html.p('Visit http://127.0.0.1:5000 to see your app!'),
-                html.h2('Add More Routes'),
-                html.textarea('''@get('/about')
+                    html.p('Visit http://127.0.0.1:5000 to see your app!'),
+                    html.h2('Add More Routes'),
+                    html.textarea('''@get('/about')
 def about():
     return html.html(
         html.head(
@@ -190,6 +198,77 @@ def about():
             html.h1('About Page')
         )
     )''', class_='code-block'),
+                    class_='tab-content active',
+                    id='quickstart'
+                ),
+                html.div(
+                    html.h1('Templates'),
+                    html.p('Hej supports both programmatic HTML building and using external HTML template files:'),
+                    html.h2('Using HTML Template Files'),
+                    html.p('Create HTML files in a templates directory and serve them directly:'),
+                    html.textarea('''# templates/index.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        .buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello, World!</h1>
+    <p>Welcome to Hej Framework</p>
+    <div class="buttons">
+        <button onclick="alert('Hello!')">Click me!</button>
+    </div>
+</body>
+</html>''', class_='code-block', **{'data-language': 'html'}),
+                    html.p('Then serve the HTML file in your route:'),
+                    html.textarea('''import hej
+
+@get('/')
+def home():
+    return 'index.html'
+
+if __name__ == '__main__':
+    hej.run()''', class_='code-block'),
+                    html.p('You can also pass context variables to templates:'),
+                    html.textarea('''@get('/greet')
+def greet():
+    return hej.template('example.html', {
+        'title': 'Greetings',
+        'heading': 'Hello, World!',
+        'message': 'Welcome to Hej Framework with templates',
+        'button_text': 'Hello from template!'
+    })''', class_='code-block'),
+                    html.p('Or simply return the template name as a string:'),
+                    html.textarea('''@get('/simple')
+def simple():
+    return 'example.html' ''', class_='code-block'),
+                    class_='tab-content',
+                    id='templates'
+                ),
                 class_='main-content'
             ),
             html.script("""
@@ -202,9 +281,12 @@ def about():
                         container.style.height = '200px';
                         block.parentNode.insertBefore(container, block);
 
+                        // Check for data-language attribute, default to 'python'
+                        const language = block.getAttribute('data-language') || 'python';
+
                         monaco.editor.create(container, {
                             value: block.value,
-                            language: 'python',
+                            language: language,
                             theme: 'vs-dark',
                             readOnly: true,
                             minimap: { enabled: false },
@@ -216,6 +298,31 @@ def about():
                             scrollbar: {
                                 vertical: 'visible',
                                 horizontal: 'visible'
+                            }
+                        });
+                    });
+
+                    // Tab switching functionality
+                    const sidebarLinks = document.querySelectorAll('.sidebar a[data-tab]');
+                    const tabContents = document.querySelectorAll('.tab-content');
+
+                    sidebarLinks.forEach(link => {
+                        link.addEventListener('click', function(e) {
+                            e.preventDefault();
+
+                            // Remove active class from all links
+                            sidebarLinks.forEach(l => l.classList.remove('active'));
+                            // Add active class to clicked link
+                            this.classList.add('active');
+
+                            // Hide all tab contents
+                            tabContents.forEach(content => content.classList.remove('active'));
+
+                            // Show selected tab content
+                            const tabId = this.getAttribute('data-tab');
+                            const selectedTab = document.getElementById(tabId);
+                            if (selectedTab) {
+                                selectedTab.classList.add('active');
                             }
                         });
                     });

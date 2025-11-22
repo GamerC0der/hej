@@ -17,13 +17,17 @@ def not_found(func):
 def run(host='127.0.0.1', port=5000, debug=False):
     app.run(host=host, port=port, debug=debug)
 
+def template(name: str, context: dict = None):
+    return app.render_template(name, context)
+
 builtins.get = get
 builtins.not_found = not_found
 builtins.html = html
 builtins.blocks = blocks
+builtins.template = template
 
 current_module = sys.modules[__name__]
 current_module.run = run
 
-__all__ = ['get', 'not_found', 'run', 'app', 'App', 'html', 'blocks']
+__all__ = ['get', 'not_found', 'run', 'app', 'App', 'html', 'blocks', 'template']
 

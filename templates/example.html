@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #333333;
+            color: white;
+            border: 1px solid #555555;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #444444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ heading }}</h1>
+        <p>{{ message }}</p>
+        <div class="buttons">
+            <button onclick="alert('{{ button_text }}')">Click me!</button>
+        </div>
+    </div>
+</body>
+</html>
