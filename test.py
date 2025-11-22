@@ -170,7 +170,8 @@ def docs():
                 html.nav(
                     html.a('Home', href='/'),
                     html.a('Quickstart', href='#', class_='active', **{'data-tab': 'quickstart'}),
-                    html.a('Templates', href='#', **{'data-tab': 'templates'})
+                    html.a('Templates', href='#', **{'data-tab': 'templates'}),
+                    html.a('404 Handling', href='#', **{'data-tab': 'error-handling'})
                 ),
                 class_='sidebar'
             ),
@@ -276,6 +277,25 @@ def simple():
     return 'example.html' ''', class_='code-block'),
                     class_='tab-content',
                     id='templates'
+                ),
+                html.div(
+                    html.h1('404 Error Handling'),
+                    html.p('Handle 404 errors with a custom page using the @not_found decorator:'),
+                    html.textarea('''@not_found
+def custom_404():
+    return html.html(
+        html.head(
+            html.title('404 Not Found')
+        ),
+        html.body(
+            html.h1('404 Not Found'),
+            html.p('This page doesn\'t exist!'),
+            html.a('Go Home', href='/')
+        )
+    )''', class_='code-block'),
+                    html.p('The @not_found decorator registers a function to handle all 404 errors. When a route is not found, this function will be called instead of showing the default "Not Found" message.'),
+                    class_='tab-content',
+                    id='error-handling'
                 ),
                 class_='main-content'
             ),
