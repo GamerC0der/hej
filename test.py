@@ -370,10 +370,20 @@ def home():
                 ),
                 html.div(
                     html.h1('Hej Builder'),
-                    html.p('Convert Flask code to Hej Framework code automatically:'),
+                    html.p('Convert Flask or FastAPI code to Hej Framework code automatically:'),
+                    html.div(
+                        html.select(
+                            html.option('Flask', value='flask', selected='selected'),
+                            html.option('FastAPI', value='fastapi'),
+                            id='framework-select',
+                            onchange='changeFramework(this.value)',
+                            style='margin-bottom: 10px; padding: 5px;'
+                        ),
+                        class_='framework-selector'
+                    ),
                     html.div(
                         html.div(
-                            html.h3('Flask Code Input'),
+                            html.h3('Flask Code Input', id='input-label'),
                             html.div(id='flask-editor', class_='monaco-editor', style='height: 300px;'),
                             class_='editor-container'
                         ),
@@ -442,8 +452,9 @@ def custom_404():
                         });
                     });
 
-                    window.flaskEditor = monaco.editor.create(document.getElementById('flask-editor'), {
-                        value: `from flask import Flask, render_template
+                    window.currentFramework = 'flask';
+
+                    window.flaskCode = `from flask import Flask, render_template
 
 app = Flask(__name__)
 
@@ -456,7 +467,33 @@ def about():
     return '<h1>About Page</h1>'
 
 if __name__ == '__main__':
-    app.run(debug=True)`,
+    app.run(debug=True)`;
+
+                    window.fastApiCode = `from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+
+app = FastAPI()
+
+@app.get('/', response_class=HTMLResponse)
+async def home():
+    return '''
+    <!DOCTYPE html>
+    <html>
+    <head><title>Home</title></head>
+    <body><h1>Hello World</h1></body>
+    </html>
+    '''
+
+@app.get('/about', response_class=HTMLResponse)
+async def about():
+    return '<h1>About Page</h1>'
+
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)`;
+
+                    window.flaskEditor = monaco.editor.create(document.getElementById('flask-editor'), {
+                        value: window.flaskCode,
                         language: 'python',
                         theme: 'vs-dark',
                         minimap: { enabled: false },
@@ -465,6 +502,18 @@ if __name__ == '__main__':
                         fontSize: 14,
                         lineNumbers: 'on'
                     });
+
+                    window.changeFramework = function(framework) {
+                        window.currentFramework = framework;
+                        const label = document.getElementById('input-label');
+                        if (framework === 'fastapi') {
+                            label.textContent = 'FastAPI Code Input';
+                            flaskEditor.setValue(window.fastApiCode);
+                        } else {
+                            label.textContent = 'Flask Code Input';
+                            flaskEditor.setValue(window.flaskCode);
+                        }
+                    };
 
                     window.hejEditor = monaco.editor.create(document.getElementById('hej-editor'), {
                         value: '',
@@ -479,8 +528,15 @@ if __name__ == '__main__':
                     });
 
                     window.convertFlaskToHej = function() {
-                        const flaskCode = flaskEditor.getValue();
-                        const hejCode = convertFlaskCode(flaskCode);
+                        const inputCode = flaskEditor.getValue();
+                        let hejCode = '';
+
+                        if (window.currentFramework === 'fastapi') {
+                            hejCode = convertFastApiCode(inputCode);
+                        } else {
+                            hejCode = convertFlaskCode(inputCode);
+                        }
+
                         hejEditor.setValue(hejCode);
                     };
 
@@ -550,6 +606,100 @@ if __name__ == '__main__':
                             }
 
                             if (trimmedLine && !trimmedLine.includes('from flask')) {
+                                const indent = '    '.repeat(indentLevel);
+                                hejCode += indent + line + '\\n';
+                            }
+
+                            if (trimmedLine.endsWith(':')) {
+                                indentLevel++;
+                            }
+                            if (trimmedLine === '' && indentLevel > 1) {
+                                indentLevel = Math.max(1, indentLevel - 1);
+                            }
+                        }
+
+                        hejCode += '\\nif __name__ == \\'__main__\\':\\n    hej.run()';
+                        return hejCode;
+                    }
+
+                    function convertFastApiCode(fastApiCode) {
+                        let hejCode = 'import hej\\n\\n';
+                        const lines = fastApiCode.split('\\n');
+                        let inRoute = false;
+                        let routeFunction = '';
+                        let indentLevel = 0;
+
+                        for (let i = 0; i < lines.length; i++) {
+                            const line = lines[i];
+                            const trimmedLine = line.trim();
+
+                            if (trimmedLine.includes('FastAPI()')) {
+                                continue;
+                            }
+
+                            if (trimmedLine.match(/@app\\.(get|post|put|delete|patch|head|options)\\(/)) {
+                                const routeMatch = trimmedLine.match(/@app\\.(get|post|put|delete|patch|head|options)\\('([^']+)'/);
+                                if (routeMatch) {
+                                    const method = routeMatch[1];
+                                    const route = routeMatch[2];
+                                    hejCode += `@${method}('${route}')\\n`;
+                                    inRoute = true;
+                                    indentLevel = 0;
+                                }
+                                continue;
+                            }
+
+                            if (trimmedLine.includes('async def ') && inRoute) {
+                                const funcMatch = trimmedLine.match(/async def (\\w+)\\(/);
+                                if (funcMatch) {
+                                    routeFunction = funcMatch[1];
+                                    hejCode += `def ${routeFunction}():\\n`;
+                                    indentLevel = 1;
+                                }
+                                continue;
+                            }
+
+                            if (trimmedLine.includes('def ') && inRoute && !trimmedLine.includes('async def ')) {
+                                const funcMatch = trimmedLine.match(/def (\\w+)\\(\\):/);
+                                if (funcMatch) {
+                                    routeFunction = funcMatch[1];
+                                    hejCode += `def ${routeFunction}():\\n`;
+                                    indentLevel = 1;
+                                }
+                                continue;
+                            }
+
+                            if (trimmedLine.includes('return HTMLResponse(')) {
+                                const htmlMatch = trimmedLine.match(/return HTMLResponse\\((.+?)\\)/s);
+                                if (htmlMatch) {
+                                    const htmlContent = htmlMatch[1].trim();
+                                    if (htmlContent.startsWith('content=')) {
+                                        const contentMatch = htmlContent.match(/content=['"](.+?)['"]/s);
+                                        if (contentMatch) {
+                                            const htmlString = contentMatch[1];
+                                            const hejHtml = convertHtmlStringToHej(htmlString);
+                                            hejCode += `    return ${hejHtml}\\n`;
+                                        }
+                                    }
+                                }
+                                continue;
+                            }
+
+                            if (trimmedLine.includes('return ')) {
+                                const returnMatch = trimmedLine.match(/return ['"](.+?)['"]/);
+                                if (returnMatch) {
+                                    const htmlContent = returnMatch[1];
+                                    const hejHtml = convertHtmlStringToHej(htmlContent);
+                                    hejCode += `    return ${hejHtml}\\n`;
+                                }
+                                continue;
+                            }
+
+                            if (trimmedLine.includes('if __name__') || trimmedLine.includes('uvicorn.run(')) {
+                                continue;
+                            }
+
+                            if (trimmedLine && !trimmedLine.includes('from fastapi') && !trimmedLine.includes('import uvicorn')) {
                                 const indent = '    '.repeat(indentLevel);
                                 hejCode += indent + line + '\\n';
                             }
