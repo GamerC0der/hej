@@ -43,7 +43,8 @@ def home():
                 html.button('Download Hej', onclick="window.location.href='https://pypi.org/project/hej/'"),
                 html.button('View API Docs', onclick="window.location.href='/docs'"),
                 class_='buttons'
-            )
+            ),
+            html.div('Powered by Hej', style='position: fixed; bottom: 20px; right: 20px; background-color: #5dade2; color: white; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1000;')
         )
     )
 
