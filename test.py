@@ -107,37 +107,58 @@ def docs():
                     'min-height': '100vh'
                 }),
                 css.sidebar({
-                    'width': '200px',
+                    'width': '240px',
                     'background-color': '#2a2a2a',
-                    'padding': '20px',
+                    'padding': '24px 20px',
                     'border-right': '1px solid #444444',
-                    'box-shadow': '2px 0 5px rgba(0,0,0,0.3)'
+                    'box-shadow': '2px 0 8px rgba(0,0,0,0.4)',
+                    'position': 'sticky',
+                    'top': '0',
+                    'height': '100vh',
+                    'overflow-y': 'auto'
                 }),
                 css.sidebar__h2({
-                    'color': '#cccccc',
-                    'font-size': '18px',
-                    'margin-bottom': '20px',
-                    'font-weight': 'normal'
+                    'color': '#ffffff',
+                    'font-size': '16px',
+                    'margin-bottom': '24px',
+                    'font-weight': '600',
+                    'letter-spacing': '0.5px',
+                    'text-transform': 'uppercase'
                 }),
                 css.sidebar__nav({
                     'display': 'flex',
                     'flex-direction': 'column',
-                    'gap': '10px'
+                    'gap': '4px'
                 }),
                 css.sidebar__a({
-                    'color': '#aaaaaa',
+                    'color': '#b0b0b0',
                     'text-decoration': 'none',
-                    'padding': '8px 12px',
-                    'border-radius': '4px',
-                    'transition': 'background-color 0.2s',
-                    'font-size': '14px'
+                    'padding': '12px 16px',
+                    'border-radius': '6px',
+                    'transition': 'all 0.2s ease',
+                    'font-size': '14px',
+                    'font-weight': '500',
+                    'display': 'flex',
+                    'align-items': 'center',
+                    'position': 'relative',
+                    'border-left': '3px solid transparent'
                 }),
                 css.sidebar__a__hover({
                     'background-color': '#3a3a3a',
-                    'color': '#ffffff'
+                    'color': '#ffffff',
+                    'transform': 'translateX(2px)',
+                    'border-left-color': '#5dade2'
                 }),
                 css.sidebar__a__active({
                     'background-color': '#444444',
+                    'color': '#ffffff',
+                    'border-left-color': '#5dade2',
+                    'box-shadow': '0 2px 8px rgba(93, 173, 226, 0.2)'
+                }),
+                css.sidebar__a__focus({
+                    'outline': '2px solid #5dade2',
+                    'outline-offset': '2px',
+                    'background-color': '#3a3a3a',
                     'color': '#ffffff'
                 }),
                 css.main_content({
@@ -770,22 +791,47 @@ if __name__ == '__main__':
                     const sidebarLinks = document.querySelectorAll('.sidebar a[data-tab]');
                     const tabContents = document.querySelectorAll('.tab-content');
 
-                    sidebarLinks.forEach(link => {
+                    function switchTab(link) {
+                        sidebarLinks.forEach(l => l.classList.remove('active'));
+                        link.classList.add('active');
+
+                        tabContents.forEach(content => content.classList.remove('active'));
+
+                        const tabId = link.getAttribute('data-tab');
+                        const selectedTab = document.getElementById(tabId);
+                        if (selectedTab) {
+                            selectedTab.classList.add('active');
+                            selectedTab.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }
+
+                    sidebarLinks.forEach((link, index) => {
                         link.addEventListener('click', function(e) {
                             e.preventDefault();
+                            switchTab(this);
+                        });
 
-                            sidebarLinks.forEach(l => l.classList.remove('active'));
-                            this.classList.add('active');
-
-                            tabContents.forEach(content => content.classList.remove('active'));
-
-                            const tabId = this.getAttribute('data-tab');
-                            const selectedTab = document.getElementById(tabId);
-                            if (selectedTab) {
-                                selectedTab.classList.add('active');
+                        link.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                switchTab(this);
+                            } else if (e.key === 'ArrowDown') {
+                                e.preventDefault();
+                                const nextIndex = (index + 1) % sidebarLinks.length;
+                                sidebarLinks[nextIndex].focus();
+                            } else if (e.key === 'ArrowUp') {
+                                e.preventDefault();
+                                const prevIndex = (index - 1 + sidebarLinks.length) % sidebarLinks.length;
+                                sidebarLinks[prevIndex].focus();
                             }
                         });
                     });
+
+                    // Set initial focus on active tab
+                    const activeLink = document.querySelector('.sidebar a.active');
+                    if (activeLink) {
+                        activeLink.focus();
+                    }
                 });
             """)
         )
