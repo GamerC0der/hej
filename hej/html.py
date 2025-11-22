@@ -44,45 +44,34 @@ class ScriptBuilder:
         if code:
             self.blocks.append(code)
 
-    def __call__(self, *blocks):
-        sb = ScriptBuilder()
-        sb.blocks.extend(self.blocks)
+    def _process_blocks(self, blocks):
+        result_blocks = []
         for block in blocks:
             if isinstance(block, ScriptBuilder):
-                sb.blocks.extend(block.blocks)
+                result_blocks.extend(block.blocks)
             elif hasattr(block, '__call__'):
                 result = block()
                 if isinstance(result, ScriptBuilder):
-                    sb.blocks.extend(result.blocks)
+                    result_blocks.extend(result.blocks)
             else:
-                sb.blocks.append(str(block))
+                result_blocks.append(str(block))
+        return result_blocks
+
+    def __call__(self, *blocks):
+        sb = ScriptBuilder()
+        sb.blocks.extend(self.blocks)
+        sb.blocks.extend(self._process_blocks(blocks))
         return sb
 
     def when_dom_ready(self, *blocks):
         sb = ScriptBuilder("document.addEventListener('DOMContentLoaded', function() {")
-        for block in blocks:
-            if isinstance(block, ScriptBuilder):
-                sb.blocks.extend(block.blocks)
-            elif hasattr(block, '__call__'):
-                result = block()
-                if isinstance(result, ScriptBuilder):
-                    sb.blocks.extend(result.blocks)
-            else:
-                sb.blocks.append(str(block))
+        sb.blocks.extend(self._process_blocks(blocks))
         sb.blocks.append("});")
         return sb
 
     def on_click(self, selector, *blocks):
         sb = ScriptBuilder(f"document.querySelector('{selector}').addEventListener('click', function() {{")
-        for block in blocks:
-            if isinstance(block, ScriptBuilder):
-                sb.blocks.extend(block.blocks)
-            elif hasattr(block, '__call__'):
-                result = block()
-                if isinstance(result, ScriptBuilder):
-                    sb.blocks.extend(result.blocks)
-            else:
-                sb.blocks.append(str(block))
+        sb.blocks.extend(self._process_blocks(blocks))
         sb.blocks.append("});")
         return sb
 
@@ -103,6 +92,18 @@ class CSSBuilder:
         if isinstance(rules, dict):
             return '\n'.join(f"    {k}: {v};" for k, v in rules.items())
         return rules
+
+    def _process_blocks_with_indent(self, blocks, indent="    "):
+        result = []
+        for block in blocks:
+            if isinstance(block, CSSBuilder):
+                for b in block.blocks:
+                    result.append(indent + b.replace('\n', '\n' + indent))
+            elif isinstance(block, dict):
+                result.append(indent + self._format_rules(block))
+            else:
+                result.append(indent + str(block))
+        return result
 
     def __call__(self, *blocks):
         cb = CSSBuilder()
@@ -131,14 +132,7 @@ class CSSBuilder:
     def nest(self, selector, *blocks):
         nested = CSSBuilder()
         nested.blocks.append(f"{selector} {{")
-        for block in blocks:
-            if isinstance(block, CSSBuilder):
-                for b in block.blocks:
-                    nested.blocks.append("    " + b.replace('\n', '\n    '))
-            elif isinstance(block, dict):
-                nested.blocks.append("    " + self._format_rules(block))
-            else:
-                nested.blocks.append("    " + str(block))
+        nested.blocks.extend(self._process_blocks_with_indent(blocks))
         nested.blocks.append("}")
         return nested
 
@@ -156,14 +150,7 @@ class CSSBuilder:
     def media(self, query, *blocks):
         media_block = CSSBuilder()
         media_block.blocks.append(f"@media {query} {{")
-        for block in blocks:
-            if isinstance(block, CSSBuilder):
-                for b in block.blocks:
-                    media_block.blocks.append("    " + b.replace('\n', '\n    '))
-            elif isinstance(block, dict):
-                media_block.blocks.append("    " + self._format_rules(block))
-            else:
-                media_block.blocks.append("    " + str(block))
+        media_block.blocks.extend(self._process_blocks_with_indent(blocks))
         media_block.blocks.append("}")
         return media_block
 
@@ -239,106 +226,80 @@ class BlockBuilder:
 blocks = BlockBuilder()
 
 class CSSBlockBuilder:
+    HTML_ELEMENTS = {'body', 'html', 'head', 'div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                     'a', 'button', 'input', 'form', 'table', 'tr', 'td', 'th', 'ul', 'ol', 'li',
+                     'img', 'video', 'audio', 'canvas', 'svg', 'path', 'circle', 'rect', 'nav'}
+
+    PSEUDO_SELECTORS = {'hover', 'focus', 'visited', 'link', 'before', 'after', 'first-child',
+                       'last-child', 'nth-child', 'disabled', 'checked', 'required', 'invalid', 'valid'}
+
+    COMBINED_CLASS_MODIFIERS = {'active', 'disabled', 'selected', 'current', 'open', 'closed'}
+
+    def _build_complex_selector(self, parts):
+        if len(parts) == 1:
+            part = parts[0]
+            return part if part in self.HTML_ELEMENTS else f'.{part.replace("_", "-")}'
+
+        if len(parts) == 2:
+            return self._build_two_part_selector(*parts)
+
+        if len(parts) == 3:
+            return self._build_three_part_selector(*parts)
+
+        # Recursive case for more than 3 parts
+        first, *rest = parts
+        base_sel = first if first in self.HTML_ELEMENTS else f'.{first.replace("_", "-")}'
+        remaining = self._build_complex_selector(rest)
+
+        if remaining.startswith('.'):
+            return f'{base_sel} {remaining}' if first in self.HTML_ELEMENTS else f'{base_sel}{remaining}'
+        return f'{base_sel} {remaining}'
+
+    def _build_two_part_selector(self, first, second):
+        base_sel = first if first in self.HTML_ELEMENTS else f'.{first.replace("_", "-")}'
+
+        if second in self.PSEUDO_SELECTORS:
+            return f'{base_sel}:{second}'
+        elif second in self.HTML_ELEMENTS:
+            return f'{base_sel} {second}'
+        elif second in self.COMBINED_CLASS_MODIFIERS and first not in self.HTML_ELEMENTS:
+            return f'{base_sel}.{second.replace("_", "-")}'
+        else:
+            return f'{base_sel} .{second.replace("_", "-")}'
+
+    def _build_three_part_selector(self, first, second, third):
+        base_sel = first if first in self.HTML_ELEMENTS else f'.{first.replace("_", "-")}'
+        child_sel = second if second in self.HTML_ELEMENTS else f'.{second.replace("_", "-")}'
+
+        if third in self.PSEUDO_SELECTORS:
+            return f'{base_sel} {child_sel}:{third}'
+        elif third in self.HTML_ELEMENTS:
+            return f'{base_sel} {child_sel} {third}'
+        elif (third in self.COMBINED_CLASS_MODIFIERS and
+              first not in self.HTML_ELEMENTS and second not in self.HTML_ELEMENTS):
+            return f'{base_sel} {child_sel}.{third.replace("_", "-")}'
+        else:
+            return f'{base_sel} {child_sel} .{third.replace("_", "-")}'
+
+    def _create_selector_function(self, selector):
+        def selector_func(rules=None, **kwargs):
+            if rules is None:
+                rules = kwargs
+            return CSSBuilder(selector, rules)
+        return selector_func
+
     def __getattr__(self, name: str):
-        html_elements = {'body', 'html', 'head', 'div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
-                        'a', 'button', 'input', 'form', 'table', 'tr', 'td', 'th', 'ul', 'ol', 'li',
-                        'img', 'video', 'audio', 'canvas', 'svg', 'path', 'circle', 'rect', 'nav'}
-        
-        pseudo_selectors = {'hover', 'focus', 'visited', 'link', 'before', 'after', 'first-child', 
-                           'last-child', 'nth-child', 'disabled', 'checked', 'required', 'invalid', 'valid'}
-        
-        combined_class_modifiers = {'active', 'disabled', 'selected', 'current', 'open', 'closed'}
-        
         if '__' in name:
             parts = name.split('__')
-            
-            def build_selector(parts_list):
-                if len(parts_list) == 1:
-                    part = parts_list[0]
-                    if part in html_elements:
-                        return part
-                    else:
-                        return f'.{part.replace("_", "-")}'
-                
-                if len(parts_list) == 2:
-                    first, second = parts_list
-                    
-                    if first in html_elements:
-                        base_sel = first
-                    else:
-                        base_sel = f'.{first.replace("_", "-")}'
-                    
-                    if second in pseudo_selectors:
-                        return f'{base_sel}:{second}'
-                    elif second in html_elements:
-                        return f'{base_sel} {second}'
-                    elif second in combined_class_modifiers and first not in html_elements:
-                        return f'{base_sel}.{second.replace("_", "-")}'
-                    else:
-                        return f'{base_sel} .{second.replace("_", "-")}'
-                
-                if len(parts_list) == 3:
-                    first, second, third = parts_list
-                    
-                    if first in html_elements:
-                        base_sel = first
-                    else:
-                        base_sel = f'.{first.replace("_", "-")}'
-                    
-                    if second in html_elements:
-                        child_sel = second
-                    else:
-                        child_sel = f'.{second.replace("_", "-")}'
-                    
-                    if third in pseudo_selectors:
-                        return f'{base_sel} {child_sel}:{third}'
-                    elif third in html_elements:
-                        return f'{base_sel} {child_sel} {third}'
-                    elif third in combined_class_modifiers and first not in html_elements and second not in html_elements:
-                        return f'{base_sel} {child_sel}.{third.replace("_", "-")}'
-                    else:
-                        return f'{base_sel} {child_sel} .{third.replace("_", "-")}'
-                
-                first = parts_list[0]
-                rest = parts_list[1:]
-                
-                if first in html_elements:
-                    base_sel = first
-                else:
-                    base_sel = f'.{first.replace("_", "-")}'
-                
-                remaining = build_selector(rest)
-                if remaining.startswith('.'):
-                    if first in html_elements:
-                        return f'{base_sel} {remaining}'
-                    else:
-                        return f'{base_sel}{remaining}'
-                else:
-                    return f'{base_sel} {remaining}'
-            
-            selector = build_selector(parts)
-            
-            def nested_selector(rules=None, **kwargs):
-                if rules is None:
-                    rules = kwargs
-                return CSSBuilder(selector, rules)
-            return nested_selector
-        
-        if name in html_elements:
-            def element_selector(rules=None, **kwargs):
-                if rules is None:
-                    rules = kwargs
-                return CSSBuilder(name, rules)
-            return element_selector
-        else:
-            def class_selector(rules=None, **kwargs):
-                if rules is None:
-                    rules = kwargs
-                selector = name.replace('_', '-')
-                if not selector.startswith('.'):
-                    selector = '.' + selector
-                return CSSBuilder(selector, rules)
-            return class_selector
+            selector = self._build_complex_selector(parts)
+            return self._create_selector_function(selector)
+
+        if name in self.HTML_ELEMENTS:
+            return self._create_selector_function(name)
+
+        # Class selector
+        selector = f'.{name.replace("_", "-")}'
+        return self._create_selector_function(selector)
 
 css = CSSBlockBuilder()
 
