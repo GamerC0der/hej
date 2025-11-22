@@ -60,6 +60,7 @@ def home():
                 ),
                 style='text-align: center;'
             ),
+            html.div('Version: 0.3.0', style='position: fixed; bottom: 20px; left: 20px; background-color: #333333; color: white; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; z-index: 1000;'),
             html.div('Powered by Hej', style='position: fixed; bottom: 20px; right: 20px; background-color: #5dade2; color: white; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; z-index: 1000;')
         )
     )
