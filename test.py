@@ -161,6 +161,28 @@ def docs():
                 }),
                 css.tab_content__active({
                     'display': 'block'
+                }),
+                css.builder_container({
+                    'display': 'flex',
+                    'flex-direction': 'column',
+                    'gap': '20px'
+                }),
+                css.editor_container({
+                    'margin-bottom': '10px'
+                }),
+                css.convert_button({
+                    'padding': '10px 20px',
+                    'background-color': '#444444',
+                    'color': '#ffffff',
+                    'border': 'none',
+                    'border-radius': '4px',
+                    'cursor': 'pointer',
+                    'font-size': '16px',
+                    'align-self': 'center',
+                    'transition': 'background-color 0.2s'
+                }),
+                css.convert_button__hover({
+                    'background-color': '#555555'
                 })
             )
         ),
@@ -172,6 +194,7 @@ def docs():
                     html.a('Quickstart', href='#', class_='active', **{'data-tab': 'quickstart'}),
                     html.a('Templates', href='#', **{'data-tab': 'templates'}),
                     html.a('CSS', href='#', **{'data-tab': 'css'}),
+                    html.a('Builder', href='#', **{'data-tab': 'builder'}),
                     html.a('404 Handling', href='#', **{'data-tab': 'error-handling'})
                 ),
                 class_='sidebar'
@@ -346,6 +369,29 @@ def home():
                     id='css'
                 ),
                 html.div(
+                    html.h1('Hej Builder'),
+                    html.p('Convert Flask code to Hej Framework code automatically:'),
+                    html.div(
+                        html.div(
+                            html.h3('Flask Code Input'),
+                            html.div(id='flask-editor', class_='monaco-editor', style='height: 300px;'),
+                            class_='editor-container'
+                        ),
+                        html.div(
+                            html.button('Convert to Hej', id='convert-btn', onclick='convertFlaskToHej()', class_='convert-button'),
+                            class_='convert-container'
+                        ),
+                        html.div(
+                            html.h3('Hej Code Output'),
+                            html.div(id='hej-editor', class_='monaco-editor', style='height: 300px;'),
+                            class_='editor-container'
+                        ),
+                        class_='builder-container'
+                    ),
+                    class_='tab-content',
+                    id='builder'
+                ),
+                html.div(
                     html.h1('404 Error Handling'),
                     html.p('Handle 404 errors with a custom page using the @not_found decorator:'),
                     html.textarea('''@not_found
@@ -395,6 +441,181 @@ def custom_404():
                             }
                         });
                     });
+
+                    window.flaskEditor = monaco.editor.create(document.getElementById('flask-editor'), {
+                        value: `from flask import Flask, render_template
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/about')
+def about():
+    return '<h1>About Page</h1>'
+
+if __name__ == '__main__':
+    app.run(debug=True)`,
+                        language: 'python',
+                        theme: 'vs-dark',
+                        minimap: { enabled: false },
+                        scrollBeyondLastLine: false,
+                        automaticLayout: true,
+                        fontSize: 14,
+                        lineNumbers: 'on'
+                    });
+
+                    window.hejEditor = monaco.editor.create(document.getElementById('hej-editor'), {
+                        value: '',
+                        language: 'python',
+                        theme: 'vs-dark',
+                        minimap: { enabled: false },
+                        scrollBeyondLastLine: false,
+                        automaticLayout: true,
+                        fontSize: 14,
+                        lineNumbers: 'on',
+                        readOnly: true
+                    });
+
+                    window.convertFlaskToHej = function() {
+                        const flaskCode = flaskEditor.getValue();
+                        const hejCode = convertFlaskCode(flaskCode);
+                        hejEditor.setValue(hejCode);
+                    };
+
+                    function convertFlaskCode(flaskCode) {
+                        let hejCode = 'import hej\\n\\n';
+                        const lines = flaskCode.split('\\n');
+                        let inRoute = false;
+                        let routeFunction = '';
+                        let indentLevel = 0;
+
+                        for (let i = 0; i < lines.length; i++) {
+                            const line = lines[i];
+                            const trimmedLine = line.trim();
+
+                            if (trimmedLine.includes('Flask(__name__)')) {
+                                continue;
+                            }
+
+                            if (trimmedLine.includes('@app.route(')) {
+                                const routeMatch = trimmedLine.match(/@app\\.route\\('([^']+)'(?:, methods=\\['([^']+)'\\])?/);
+                                if (routeMatch) {
+                                    const route = routeMatch[1];
+                                    const method = routeMatch[2] ? routeMatch[2].toLowerCase() : 'get';
+                                    hejCode += `@${method}('${route}')\\n`;
+                                    inRoute = true;
+                                    indentLevel = 0;
+                                }
+                                continue;
+                            }
+
+                            if (trimmedLine.includes('def ') && inRoute) {
+                                const funcMatch = trimmedLine.match(/def (\\w+)\\(\\):/);
+                                if (funcMatch) {
+                                    routeFunction = funcMatch[1];
+                                    hejCode += `def ${routeFunction}():\\n`;
+                                    indentLevel = 1;
+                                }
+                                continue;
+                            }
+
+                            if (trimmedLine.includes('render_template(')) {
+                                const templateMatch = trimmedLine.match(/render_template\\('([^']+)'(?:, (.+?))?\\)?$/);
+                                if (templateMatch) {
+                                    const template = templateMatch[1];
+                                    const context = templateMatch[2];
+                                    if (context) {
+                                        hejCode += `    return hej.template('${template}', ${context})\\n`;
+                                    } else {
+                                        hejCode += `    return '${template}'\\n`;
+                                    }
+                                }
+                                continue;
+                            }
+
+                            if (trimmedLine.includes('return ')) {
+                                const returnMatch = trimmedLine.match(/return ['"](.+?)['"]/);
+                                if (returnMatch) {
+                                    const htmlContent = returnMatch[1];
+                                    const hejHtml = convertHtmlStringToHej(htmlContent);
+                                    hejCode += `    return ${hejHtml}\\n`;
+                                }
+                                continue;
+                            }
+
+                            if (trimmedLine.includes('if __name__') || trimmedLine.includes('app.run(')) {
+                                continue;
+                            }
+
+                            if (trimmedLine && !trimmedLine.includes('from flask')) {
+                                const indent = '    '.repeat(indentLevel);
+                                hejCode += indent + line + '\\n';
+                            }
+
+                            if (trimmedLine.endsWith(':')) {
+                                indentLevel++;
+                            }
+                            if (trimmedLine === '' && indentLevel > 1) {
+                                indentLevel = Math.max(1, indentLevel - 1);
+                            }
+                        }
+
+                        hejCode += '\\nif __name__ == \\'__main__\\':\\n    hej.run()';
+                        return hejCode;
+                    }
+
+                    function convertHtmlStringToHej(htmlString) {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(htmlString, 'text/html');
+
+                        function convertElement(element) {
+                            if (element.nodeType === Node.TEXT_NODE) {
+                                const text = element.textContent.trim();
+                                return text ? `'${text}'` : '';
+                            }
+
+                            if (element.nodeType !== Node.ELEMENT_NODE) {
+                                return '';
+                            }
+
+                            const tagName = element.tagName.toLowerCase();
+                            let attrs = '';
+
+                            for (let i = 0; i < element.attributes.length; i++) {
+                                const attr = element.attributes[i];
+                                if (attr.name === 'class') {
+                                    attrs += `, class_='${attr.value}'`;
+                                } else {
+                                    attrs += `, ${attr.name}='${attr.value}'`;
+                                }
+                            }
+
+                            let children = [];
+                            for (let child of element.childNodes) {
+                                const converted = convertElement(child);
+                                if (converted) {
+                                    children.push(converted);
+                                }
+                            }
+
+                            if (children.length === 0) {
+                                return `html.${tagName}(${attrs.slice(2)})`;
+                            } else if (children.length === 1) {
+                                return `html.${tagName}(${children[0]}${attrs})`;
+                            } else {
+                                return `html.${tagName}(\\n        ${children.join(',\\n        ')}\\n    ${attrs})`;
+                            }
+                        }
+
+                        const bodyContent = Array.from(doc.body.childNodes)
+                            .map(convertElement)
+                            .filter(x => x)
+                            .join(',\\n        ');
+
+                        return `html.html(\\n        html.head(\\n            html.title('Page')\\n        ),\\n        html.body(\\n            ${bodyContent}\\n        )\\n    )`;
+                    }
 
                     const sidebarLinks = document.querySelectorAll('.sidebar a[data-tab]');
                     const tabContents = document.querySelectorAll('.tab-content');
