@@ -171,6 +171,7 @@ def docs():
                     html.a('Home', href='/'),
                     html.a('Quickstart', href='#', class_='active', **{'data-tab': 'quickstart'}),
                     html.a('Templates', href='#', **{'data-tab': 'templates'}),
+                    html.a('CSS', href='#', **{'data-tab': 'css'}),
                     html.a('404 Handling', href='#', **{'data-tab': 'error-handling'})
                 ),
                 class_='sidebar'
@@ -277,6 +278,72 @@ def simple():
     return 'example.html' ''', class_='code-block'),
                     class_='tab-content',
                     id='templates'
+                ),
+                html.div(
+                    html.h1('CSS in Hej'),
+                    html.p('Hej provides a convenient way to add CSS styles to your HTML elements. You can use the css module to create styles programmatically:'),
+                    html.h2('Basic CSS Styling'),
+                    html.textarea('''import hej
+from hej import css
+
+@get('/')
+def home():
+    return html.html(
+        html.head(
+            html.title('My App'),
+            html.style(
+                css.body({
+                    'font-family': 'Arial, sans-serif',
+                    'margin': '0',
+                    'padding': '40px',
+                    'text-align': 'center',
+                    'background-color': '#f0f0f0',
+                    'color': '#333'
+                }),
+                css.h1({
+                    'color': '#2c3e50',
+                    'margin-bottom': '20px'
+                }),
+                css.button({
+                    'padding': '10px 20px',
+                    'background-color': '#3498db',
+                    'color': 'white',
+                    'border': 'none',
+                    'border-radius': '4px',
+                    'cursor': 'pointer'
+                }),
+                css.button__hover({
+                    'background-color': '#2980b9'
+                })
+            )
+        ),
+        html.body(
+            html.h1('Hello, World!'),
+            html.button('Click me!', onclick="alert('Hello!')")
+        )
+    )''', class_='code-block'),
+                    html.h2('CSS Classes and Selectors'),
+                    html.p('You can target specific CSS selectors and classes:'),
+                    html.textarea('''html.style(
+    css('.my-class', {
+        'color': 'red',
+        'font-size': '18px'
+    }),
+    css('#my-id', {
+        'background-color': 'blue'
+    }),
+    css('p:hover', {
+        'text-decoration': 'underline'
+    })
+)''', class_='code-block'),
+                    html.h2('Using External CSS Files'),
+                    html.p('You can also link to external CSS files:'),
+                    html.textarea('''html.head(
+    html.title('My App'),
+    html.link(rel='stylesheet', href='/static/style.css')
+)''', class_='code-block'),
+                    class_='tab-content',
+                    id='css'
                 ),
                 html.div(
                     html.h1('404 Error Handling'),
