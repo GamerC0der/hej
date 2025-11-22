@@ -45,8 +45,8 @@ def home():
                 class_='buttons'
             )
         )
-    ) 
-    
+    )
+
 @not_found
 def custom_404():
     return html.html(
@@ -61,25 +61,27 @@ def custom_404():
 
 @get('/docs')
 def docs():
-    require_js_url = 'https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js'
-    monaco_loader_url = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js'
-    monaco_base_url = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/'
-    monaco_worker_url = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/base/worker/workerMain.js'
-    monaco_unpkg_url = 'https://unpkg.com/monaco-editor@0.45.0/min/vs'
+    urls = {
+        'require_js': 'https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js',
+        'monaco_loader': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js',
+        'monaco_base': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/',
+        'monaco_worker': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/base/worker/workerMain.js',
+        'monaco_unpkg': 'https://unpkg.com/monaco-editor@0.45.0/min/vs'
+    }
 
     return html.html(
         html.head(
             html.title('Hej - Documentation'),
-            html.script(src=require_js_url),
-            html.script(src=monaco_loader_url),
+            html.script(src=urls['require_js']),
+            html.script(src=urls['monaco_loader']),
             html.script(f"""
                 window.MonacoEnvironment = {{
                     getWorkerUrl: function(workerId, label) {{
                         return `data:text/javascript;charset=utf-8,${{encodeURIComponent(`
                             self.MonacoEnvironment = {{
-                                baseUrl: '{monaco_base_url}'
+                                baseUrl: '{urls['monaco_base']}'
                             }};
-                            importScripts('{monaco_worker_url}');
+                            importScripts('{urls['monaco_worker']}');
                         `)}}`;
                     }}
                 }};
@@ -278,7 +280,7 @@ def simple():
                 class_='main-content'
             ),
             html.script("""
-                require.config({ paths: { vs: '""" + monaco_unpkg_url + """' } });
+                require.config({ paths: { vs: '""" + urls['monaco_unpkg'] + """' } });
                 require(['vs/editor/editor.main'], function() {
                     const codeBlocks = document.querySelectorAll('.code-block');
                     codeBlocks.forEach(function(block, index) {
@@ -287,7 +289,6 @@ def simple():
                         container.style.height = '200px';
                         block.parentNode.insertBefore(container, block);
 
-                        // Check for data-language attribute, default to 'python'
                         const language = block.getAttribute('data-language') || 'python';
 
                         monaco.editor.create(container, {
@@ -308,7 +309,6 @@ def simple():
                         });
                     });
 
-                    // Tab switching functionality
                     const sidebarLinks = document.querySelectorAll('.sidebar a[data-tab]');
                     const tabContents = document.querySelectorAll('.tab-content');
 
@@ -316,15 +316,11 @@ def simple():
                         link.addEventListener('click', function(e) {
                             e.preventDefault();
 
-                            // Remove active class from all links
                             sidebarLinks.forEach(l => l.classList.remove('active'));
-                            // Add active class to clicked link
                             this.classList.add('active');
 
-                            // Hide all tab contents
                             tabContents.forEach(content => content.classList.remove('active'));
 
-                            // Show selected tab content
                             const tabId = this.getAttribute('data-tab');
                             const selectedTab = document.getElementById(tabId);
                             if (selectedTab) {
@@ -338,16 +334,6 @@ def simple():
     )
 
 if __name__ == '__main__':
-    debug_config = {
-        'enabled': True,
-        'log_level': 'DEBUG',
-        'log_requests': True,
-        'log_responses': True,
-        'log_timing': True,
-        'show_stack_traces': True,
-        'log_static_files': False,
-        'log_templates': True,
-        'colorize_logs': True
-    }
+    debug_config = {'enabled': True, 'log_level': 'DEBUG', 'log_requests': True, 'log_responses': True, 'log_timing': True, 'show_stack_traces': True, 'log_static_files': False, 'log_templates': True, 'colorize_logs': True}
 
     hej.run(host='0.0.0.0', port=5000, debug=debug_config)
