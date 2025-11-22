@@ -5,37 +5,37 @@ def home():
     return html.html(
         html.head(
             html.title('Hej'),
-            html.style("""
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 0;
-                    padding: 40px;
-                    text-align: center;
-                    background-color: #1a1a1a;
-                    color: #ffffff;
-                }
-                h1 {
-                    margin-bottom: 40px;
-                    color: #ffffff;
-                }
-                .buttons {
-                    display: flex;
-                    gap: 20px;
-                    justify-content: center;
-                }
-                button {
-                    padding: 10px 20px;
-                    font-size: 16px;
-                    cursor: pointer;
-                    background-color: #333333;
-                    color: #ffffff;
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                }
-                button:hover {
-                    background-color: #444444;
-                }
-            """)
+            html.style(
+                css.body({
+                    'font-family': 'Arial, sans-serif',
+                    'margin': '0',
+                    'padding': '40px',
+                    'text-align': 'center',
+                    'background-color': '#1a1a1a',
+                    'color': '#ffffff'
+                }),
+                css.h1({
+                    'margin-bottom': '40px',
+                    'color': '#ffffff'
+                }),
+                css.buttons({
+                    'display': 'flex',
+                    'gap': '20px',
+                    'justify-content': 'center'
+                }),
+                css.button({
+                    'padding': '10px 20px',
+                    'font-size': '16px',
+                    'cursor': 'pointer',
+                    'background-color': '#333333',
+                    'color': '#ffffff',
+                    'border': '1px solid #555555',
+                    'border-radius': '4px'
+                }),
+                css.button__hover({
+                    'background-color': '#444444'
+                })
+            )
         ),
         html.body(
             html.h1('Hej, World!'),
@@ -86,83 +86,83 @@ def docs():
                     }}
                 }};
             """),
-            html.style("""
-                .monaco-editor {
-                    margin: 10px 0;
-                    border: 1px solid #404040;
-                    border-radius: 4px;
-                }
-                .monaco-editor .margin {
-                    background-color: #2d2d2d !important;
-                }
-            """),
-            html.style("""
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 0;
-                    padding: 0;
-                    background-color: #1a1a1a;
-                    color: #ffffff;
-                    display: flex;
-                    min-height: 100vh;
-                }
-                .sidebar {
-                    width: 200px;
-                    background-color: #2a2a2a;
-                    padding: 20px;
-                    border-right: 1px solid #444444;
-                    box-shadow: 2px 0 5px rgba(0,0,0,0.3);
-                }
-                .sidebar h2 {
-                    color: #cccccc;
-                    font-size: 18px;
-                    margin-bottom: 20px;
-                    font-weight: normal;
-                }
-                .sidebar nav {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 10px;
-                }
-                .sidebar a {
-                    color: #aaaaaa;
-                    text-decoration: none;
-                    padding: 8px 12px;
-                    border-radius: 4px;
-                    transition: background-color 0.2s;
-                    font-size: 14px;
-                }
-                .sidebar a:hover {
-                    background-color: #3a3a3a;
-                    color: #ffffff;
-                }
-                .sidebar a.active {
-                    background-color: #444444;
-                    color: #ffffff;
-                }
-                .main-content {
-                    flex: 1;
-                    padding: 40px;
-                    overflow-y: auto;
-                }
-                h1 {
-                    margin-bottom: 20px;
-                    color: #ffffff;
-                }
-                p {
-                    line-height: 1.6;
-                    margin-bottom: 15px;
-                }
-                .code-block {
-                    display: none;
-                }
-                .tab-content {
-                    display: none;
-                }
-                .tab-content.active {
-                    display: block;
-                }
-            """)
+            html.style(
+                css.monaco_editor({
+                    'margin': '10px 0',
+                    'border': '1px solid #404040',
+                    'border-radius': '4px'
+                }),
+                css.monaco_editor__margin({
+                    'background-color': '#2d2d2d !important'
+                })
+            ),
+            html.style(
+                css.body({
+                    'font-family': 'Arial, sans-serif',
+                    'margin': '0',
+                    'padding': '0',
+                    'background-color': '#1a1a1a',
+                    'color': '#ffffff',
+                    'display': 'flex',
+                    'min-height': '100vh'
+                }),
+                css.sidebar({
+                    'width': '200px',
+                    'background-color': '#2a2a2a',
+                    'padding': '20px',
+                    'border-right': '1px solid #444444',
+                    'box-shadow': '2px 0 5px rgba(0,0,0,0.3)'
+                }),
+                css.sidebar__h2({
+                    'color': '#cccccc',
+                    'font-size': '18px',
+                    'margin-bottom': '20px',
+                    'font-weight': 'normal'
+                }),
+                css.sidebar__nav({
+                    'display': 'flex',
+                    'flex-direction': 'column',
+                    'gap': '10px'
+                }),
+                css.sidebar__a({
+                    'color': '#aaaaaa',
+                    'text-decoration': 'none',
+                    'padding': '8px 12px',
+                    'border-radius': '4px',
+                    'transition': 'background-color 0.2s',
+                    'font-size': '14px'
+                }),
+                css.sidebar__a__hover({
+                    'background-color': '#3a3a3a',
+                    'color': '#ffffff'
+                }),
+                css.sidebar__a__active({
+                    'background-color': '#444444',
+                    'color': '#ffffff'
+                }),
+                css.main_content({
+                    'flex': '1',
+                    'padding': '40px',
+                    'overflow-y': 'auto'
+                }),
+                css.h1({
+                    'margin-bottom': '20px',
+                    'color': '#ffffff'
+                }),
+                css.p({
+                    'line-height': '1.6',
+                    'margin-bottom': '15px'
+                }),
+                css.code_block({
+                    'display': 'none'
+                }),
+                css.tab_content({
+                    'display': 'none'
+                }),
+                css.tab_content__active({
+                    'display': 'block'
+                })
+            )
         ),
         html.body(
             html.div(
