@@ -7,44 +7,60 @@ def home():
             html.title('Hej'),
             html.style(
                 css.body({
-                    'font-family': 'Arial, sans-serif',
+                    'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     'margin': '0',
-                    'padding': '40px',
-                    'text-align': 'center',
+                    'padding': '0',
+                    'min-height': '100vh',
+                    'display': 'flex',
+                    'flex-direction': 'column',
+                    'align-items': 'center',
+                    'justify-content': 'center',
                     'background-color': '#1a1a1a',
                     'color': '#ffffff'
                 }),
                 css.h1({
-                    'margin-bottom': '40px',
-                    'color': '#ffffff'
+                    'margin': '0 0 40px 0',
+                    'font-size': '3.5rem',
+                    'font-weight': '200',
+                    'color': '#ffffff',
+                    'letter-spacing': '-0.03em'
                 }),
                 css.buttons({
                     'display': 'flex',
                     'gap': '20px',
-                    'justify-content': 'center'
+                    'justify-content': 'center',
+                    'flex-wrap': 'wrap'
                 }),
                 css.button({
-                    'padding': '10px 20px',
+                    'padding': '14px 28px',
                     'font-size': '16px',
+                    'font-weight': '500',
                     'cursor': 'pointer',
                     'background-color': '#333333',
                     'color': '#ffffff',
                     'border': '1px solid #555555',
-                    'border-radius': '4px'
+                    'border-radius': '6px',
+                    'transition': 'all 0.2s ease',
+                    'text-transform': 'uppercase',
+                    'letter-spacing': '0.5px'
                 }),
                 css.button__hover({
-                    'background-color': '#444444'
-                })
+                    'background-color': '#444444',
+                    'border-color': '#666666'
+                }),
             )
         ),
         html.body(
-            html.h1('Hej, World!'),
             html.div(
-                html.button('Download Hej', onclick="window.location.href='https://pypi.org/project/hej/'"),
-                html.button('View API Docs', onclick="window.location.href='/docs'"),
-                class_='buttons'
+                html.h1('Hej Framework'),
+                html.div(
+                    html.button('Download Hej', onclick="window.location.href='https://pypi.org/project/hej/'"),
+                    html.button('View API Docs', onclick="window.location.href='/docs'"),
+                    class_='buttons'
+                ),
+                style='text-align: center;'
             ),
-            html.div('Powered by Hej', style='position: fixed; bottom: 20px; right: 20px; background-color: #5dade2; color: white; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1000;')
+            html.div('Powered by Hej', style='position: fixed; bottom: 20px; right: 20px; background-color: #5dade2; color: white; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; z-index: 1000;')
         )
     )
 
@@ -66,7 +82,7 @@ def docs():
         'require_js': 'https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js',
         'monaco_loader': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js',
         'monaco_base': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/',
-        'monaco_worker': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/base/worker/workerMain.js',
+        'monaco_worker': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vsx/base/worker/workerMain.js',
         'monaco_unpkg': 'https://unpkg.com/monaco-editor@0.45.0/min/vs'
     }
 
