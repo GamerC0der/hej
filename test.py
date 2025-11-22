@@ -61,22 +61,28 @@ def custom_404():
 
 @get('/docs')
 def docs():
+    require_js_url = 'https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js'
+    monaco_loader_url = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js'
+    monaco_base_url = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/'
+    monaco_worker_url = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/base/worker/workerMain.js'
+    monaco_unpkg_url = 'https://unpkg.com/monaco-editor@0.45.0/min/vs'
+
     return html.html(
         html.head(
             html.title('Hej - Documentation'),
-            html.script(src='https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js'),
-            html.script(src='https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js'),
-            html.script("""
-                window.MonacoEnvironment = {
-                    getWorkerUrl: function(workerId, label) {
-                        return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
-                            self.MonacoEnvironment = {
-                                baseUrl: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/'
-                            };
-                            importScripts('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/base/worker/workerMain.js');
-                        `)}`;
-                    }
-                };
+            html.script(src=require_js_url),
+            html.script(src=monaco_loader_url),
+            html.script(f"""
+                window.MonacoEnvironment = {{
+                    getWorkerUrl: function(workerId, label) {{
+                        return `data:text/javascript;charset=utf-8,${{encodeURIComponent(`
+                            self.MonacoEnvironment = {{
+                                baseUrl: '{monaco_base_url}'
+                            }};
+                            importScripts('{monaco_worker_url}');
+                        `)}}`;
+                    }}
+                }};
             """),
             html.style("""
                 .monaco-editor {
@@ -272,7 +278,7 @@ def simple():
                 class_='main-content'
             ),
             html.script("""
-                require.config({ paths: { vs: 'https://unpkg.com/monaco-editor@0.45.0/min/vs' } });
+                require.config({ paths: { vs: '""" + monaco_unpkg_url + """' } });
                 require(['vs/editor/editor.main'], function() {
                     const codeBlocks = document.querySelectorAll('.code-block');
                     codeBlocks.forEach(function(block, index) {
