@@ -4,7 +4,7 @@ __author__ = "Matthew"
 import sys
 import builtins
 from .app import App
-from .html import html, blocks, css
+from .html import html, css
 
 app = App()
 
@@ -23,12 +23,11 @@ def template(name: str, context: dict = None):
 builtins.get = get
 builtins.not_found = not_found
 builtins.html = html
-builtins.blocks = blocks
 builtins.css = css
 builtins.template = template
 
 current_module = sys.modules[__name__]
 current_module.run = run
 
-__all__ = ['get', 'not_found', 'run', 'app', 'App', 'html', 'blocks', 'css', 'template']
+__all__ = ['get', 'not_found', 'run', 'app', 'App', 'html', 'css', 'template']
 
