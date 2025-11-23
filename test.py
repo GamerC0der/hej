@@ -4,7 +4,7 @@ import hej
 def home():
     return html.html(
         html.head(
-            html.title('Hej'),
+            html.title('Hej - Landing'),
             html.style(
                 css.body({
                     'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
